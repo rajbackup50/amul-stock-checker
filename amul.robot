@@ -10,7 +10,7 @@ ${product_to_be_searched}    Amul High Protein Buttermilk, 200 mL | Pack of 30
 *** Test Cases ***
 Verify if amul product is available or not
     # Open a new Chromium browser (not headless)
-    New Browser    chromium    headless=true
+    New Browser    chromium    headless=True
 
     # Set browser window size
     New Context    viewport={'width': 1280, 'height': 720}
