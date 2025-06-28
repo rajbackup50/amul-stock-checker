@@ -52,7 +52,7 @@ def send_email():
 
 def run_robot():
     print("🤖 Running amul.robot...")
-    result = subprocess.run(["robot", "amul.robot"], capture_output=True, text=True)
+    result = subprocess.run(["robot","-d","Results","amul.robot"], capture_output=True, text=True)
     print(result.stdout)
 
     if "Yay! The product is available for purchase" in result.stdout:

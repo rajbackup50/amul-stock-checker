@@ -13,7 +13,6 @@ Verify if amul product is available or not
     New Browser    chromium    headless=True
 
     # Set browser window size
-    New Context    viewport={'width': 1280, 'height': 720}
 
     # Open the Amul online shop homepage
     New Page       https://shop.amul.com/en/
