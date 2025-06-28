@@ -1,0 +1,36 @@
+name: 🔄 Amul Stock Checker (Every 10 Minutes)
+
+on:
+  schedule:
+    - cron: '*/10 * * * *'  # Runs every 10 minutes (UTC)
+  workflow_dispatch:        # Allow manual run from GitHub UI
+
+jobs:
+  check-amul-stock:
+    runs-on: ubuntu-latest
+
+    env:
+      GMAIL_USER: ${{ secrets.GMAIL_USER }}
+      GMAIL_PASS: ${{ secrets.GMAIL_PASS }}
+
+    steps:
+      - name: ⬇️ Checkout repository
+        uses: actions/checkout@v4
+
+      - name: 🐍 Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: 3.12
+
+      - name: 📦 Install pip dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: 🌐 Install rfbrowser & Playwright
+        run: |
+          rfbrowser init
+          playwright install
+
+      - name: 🤖 Run Python script
+        run: python run.py
