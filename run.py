@@ -8,26 +8,26 @@ import io
 
 sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
 
-INIT_FLAG = ".initialized"  # File used to track first-time setup
+INIT_FLAG = ".initialized"  # Hidden file used to track first-time setup
 
 def install_dependencies():
     print("📦 Installing dependencies...")
     subprocess.check_call([sys.executable, "-m", "pip", "install", "-r", "requirements.txt"])
 
     print("🧠 Initializing rfbrowser (playwright)...")
-    subprocess.run(["rfbrowser", "init", "--skip-browsers"], check=True)
+    subprocess.run(["rfbrowser", "init"], check=True)
 
-    # Mark setup complete
+    # Mark setup as completed
     with open(INIT_FLAG, "w") as f:
         f.write("done")
-    print("✅ Dependencies installed and rfbrowser initialized.")
+    print("✅ Dependencies installed and initialization complete.")
 
 def send_email():
     print("📧 Sending email...")
 
     sender = os.getenv("GMAIL_USER")
     password = os.getenv("GMAIL_PASS")
-    recipient = sender  # Sending to self
+    recipient = sender
 
     subject = "✅ Amul Product Available!"
     body = (
@@ -53,7 +53,6 @@ def send_email():
 def run_robot():
     print("🤖 Running amul.robot...")
     result = subprocess.run(["robot", "amul.robot"], capture_output=True, text=True)
-
     print(result.stdout)
 
     if "Yay! The product is available for purchase" in result.stdout:
@@ -69,6 +68,5 @@ def run_robot():
 if __name__ == "__main__":
     if not os.path.exists(INIT_FLAG):
         install_dependencies()
-
     exit_code = run_robot()
     sys.exit(exit_code)
