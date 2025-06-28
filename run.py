@@ -7,9 +7,10 @@ import os
 import io
 import re
 
+# Ensure UTF-8 output (especially for emojis)
 sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
 
-INIT_FLAG = ".initialized"  # Hidden file used to track first-time setup
+INIT_FLAG = ".initialized"  # File to mark first-time setup complete
 
 def install_dependencies():
     print("📦 Installing dependencies...")
@@ -18,7 +19,6 @@ def install_dependencies():
     print("🧠 Initializing rfbrowser (playwright)...")
     subprocess.run(["rfbrowser", "init"], check=True)
 
-    # Mark setup as completed
     with open(INIT_FLAG, "w") as f:
         f.write("done")
     print("✅ Dependencies installed and initialization complete.")
@@ -37,11 +37,10 @@ def send_email(available_products):
         # Generate clean slug from product name
         slug = product.lower()
         slug = slug.replace(",", "")
-        slug = slug.replace("|", "")
+        slug = slug.replace("|", "or")  # ✅ replace | with 'or' to match actual URL
         slug = re.sub(r'\s+', '-', slug)
         slug = slug.strip("-")
         url = f"https://shop.amul.com/en/product/{slug}"
-
         body += f"• {product}\n👉 {url}\n\n"
 
     msg = MIMEMultipart()
@@ -65,8 +64,8 @@ def run_robot():
 
     available_products = []
 
+    # Check lines for "Yay! <product> is available for purchase"
     for line in result.stdout.splitlines():
-        # Example: Yay! Amul High Protein Rose Lassi, 200 mL | Pack of 30 is available for purchase
         match = re.search(r"Yay!\s*(.*?)\s*is available for purchase", line)
         if match:
             product_name = match.group(1).strip()
