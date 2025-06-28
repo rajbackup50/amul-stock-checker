@@ -33,7 +33,7 @@ def send_email():
     body = (
         "Good news! 🎉\n\n"
         "The Amul High Protein Buttermilk is now IN STOCK!\n"
-        "👉 https://shop.amul.com/en/amul-high-protein-buttermilk-200-ml-or-pack-of-30"
+        "👉 https://shop.amul.com/en/product/amul-high-protein-buttermilk-200-ml-or-pack-of-30"
     )
 
     msg = MIMEMultipart()
