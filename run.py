@@ -1,24 +1,64 @@
 import subprocess
 import sys
+import smtplib
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
+import os
+import io
+
+sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
+
+INIT_FLAG = ".initialized"  # File used to track first-time setup
 
 def install_dependencies():
     print("📦 Installing dependencies...")
     subprocess.check_call([sys.executable, "-m", "pip", "install", "-r", "requirements.txt"])
 
     print("🧠 Initializing rfbrowser (playwright)...")
-    subprocess.run(["rfbrowser", "init", "--skip-browser-download"], check=True)
-    subprocess.run(["playwright", "install", "chromium"], check=True)
+    subprocess.run(["rfbrowser", "init", "--skip-browsers"], check=True)
+
+    # Mark setup complete
+    with open(INIT_FLAG, "w") as f:
+        f.write("done")
+    print("✅ Dependencies installed and rfbrowser initialized.")
+
+def send_email():
+    print("📧 Sending email...")
+
+    sender = os.getenv("GMAIL_USER")
+    password = os.getenv("GMAIL_PASS")
+    recipient = sender  # Sending to self
+
+    subject = "✅ Amul Product Available!"
+    body = (
+        "Good news! 🎉\n\n"
+        "The Amul High Protein Buttermilk is now IN STOCK!\n"
+        "👉 https://shop.amul.com/en/amul-high-protein-buttermilk-200-ml-or-pack-of-30"
+    )
+
+    msg = MIMEMultipart()
+    msg["From"] = sender
+    msg["To"] = recipient
+    msg["Subject"] = subject
+    msg.attach(MIMEText(body, "plain"))
+
+    server = smtplib.SMTP("smtp.gmail.com", 587)
+    server.starttls()
+    server.login(sender, password)
+    server.sendmail(sender, recipient, msg.as_string())
+    server.quit()
+
+    print("✅ Email sent.")
 
 def run_robot():
     print("🤖 Running amul.robot...")
     result = subprocess.run(["robot", "amul.robot"], capture_output=True, text=True)
-    
-    # Print full Robot output for debugging/logging
+
     print(result.stdout)
-    
-    # Parse meaningful result from robot console logs
+
     if "Yay! The product is available for purchase" in result.stdout:
-        print("✅ Product is IN STOCK! Order now!")
+        print("✅ Product is IN STOCK! Sending email...")
+        send_email()
     elif "Broke my heart, the product is sold out" in result.stdout:
         print("❌ Product is SOLD OUT at the moment.")
     else:
@@ -27,6 +67,8 @@ def run_robot():
     return result.returncode
 
 if __name__ == "__main__":
-    install_dependencies()
+    if not os.path.exists(INIT_FLAG):
+        install_dependencies()
+
     exit_code = run_robot()
     sys.exit(exit_code)
