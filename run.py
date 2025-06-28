@@ -8,33 +8,28 @@ import io
 
 sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
 
-INIT_FLAG = ".initialized"  # Hidden file used to track first-time setup
+INIT_FLAG = ".initialized"
 
 def install_dependencies():
     print("📦 Installing dependencies...")
     subprocess.check_call([sys.executable, "-m", "pip", "install", "-r", "requirements.txt"])
-
     print("🧠 Initializing rfbrowser (playwright)...")
     subprocess.run(["rfbrowser", "init"], check=True)
-
-    # Mark setup as completed
     with open(INIT_FLAG, "w") as f:
         f.write("done")
     print("✅ Dependencies installed and initialization complete.")
 
-def send_email():
+def send_email(available_products):
     print("📧 Sending email...")
-
     sender = os.getenv("GMAIL_USER")
     password = os.getenv("GMAIL_PASS")
     recipient = sender
 
-    subject = "✅ Amul Product Available!"
-    body = (
-        "Good news! 🎉\n\n"
-        "The Amul High Protein Buttermilk is now IN STOCK!\n"
-        "👉 https://shop.amul.com/en/product/amul-high-protein-buttermilk-200-ml-or-pack-of-30"
-    )
+    subject = "✅ Amul Product Availability Update"
+    body = "Good news! 🎉\n\nThe following Amul products are now IN STOCK:\n"
+    for product in available_products:
+        url_name = product.lower().replace(" ", "-").replace(",", "").replace("|", "").replace("--", "-").replace("ml-", "ml-or-")
+        body += f"👉 {product}\n🔗 https://shop.amul.com/en/product/{url_name}\n\n"
 
     msg = MIMEMultipart()
     msg["From"] = sender
@@ -47,21 +42,24 @@ def send_email():
     server.login(sender, password)
     server.sendmail(sender, recipient, msg.as_string())
     server.quit()
-
     print("✅ Email sent.")
 
 def run_robot():
     print("🤖 Running amul.robot...")
-    result = subprocess.run(["robot","-d","Results","amul.robot"], capture_output=True, text=True)
+    result = subprocess.run(["robot", "-d", "Results", "amul.robot"], capture_output=True, text=True)
     print(result.stdout)
 
-    if "Yay! The product is available for purchase" in result.stdout:
-        print("✅ Product is IN STOCK! Sending email...")
-        send_email()
-    elif "Broke my heart, the product is sold out" in result.stdout:
-        print("❌ Product is SOLD OUT at the moment.")
+    available_products = []
+    for line in result.stdout.splitlines():
+        if "✅" in line and "available for purchase" in line:
+            product = line.split("✅")[1].split(" is")[0].strip()
+            available_products.append(product)
+
+    if available_products:
+        print("📦 Available products found:", available_products)
+        send_email(available_products)
     else:
-        print("⚠️ Could not determine product availability. Please check manually.")
+        print("❌ No products are available.")
 
     return result.returncode
 
